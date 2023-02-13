@@ -53,12 +53,29 @@ export default class Day extends React.Component {
     ]),
   };
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      labelDay: "",
+    };
+  }
+
   componentDidMount() {
     this.handleFocusDay();
+    this.getAriaLabel();
   }
 
   componentDidUpdate(prevProps) {
+    const { startDate, endDate, selected } = this.props;
     this.handleFocusDay(prevProps);
+
+    if (
+      startDate !== prevProps.startDate ||
+      endDate !== prevProps.endDate ||
+      selected !== prevProps.selected
+    ) {
+      this.getAriaLabel();
+    }
   }
 
   dayEl = React.createRef();
@@ -267,16 +284,50 @@ export default class Day extends React.Component {
   getAriaLabel = () => {
     const {
       day,
-      ariaLabelPrefixWhenEnabled = "Choose",
+      selectsRange,
+      startDate,
+      endDate,
+      selected,
+      ariaLabelPrefixWhenEnabled = "Single date",
       ariaLabelPrefixWhenDisabled = "Not available",
     } = this.props;
 
-    const prefix =
-      this.isDisabled() || this.isExcluded()
-        ? ariaLabelPrefixWhenDisabled
-        : ariaLabelPrefixWhenEnabled;
+    const parseDate = (date) => formatDate(date, "PPPP", this.props.locale);
 
-    return `${prefix} ${formatDate(day, "PPPP", this.props.locale)}`;
+    if (selectsRange) {
+      if (!startDate && !endDate) {
+        this.setState({
+          labelDay: `${parseDate(day)} Choose date range, nothing selected`,
+        });
+      } else if (startDate && !endDate) {
+        this.setState({
+          labelDay: `${parseDate(
+            day
+          )} Date range, selected start date ${parseDate(
+            startDate
+          )}, end date not selected`,
+        });
+      } else {
+        this.setState({
+          labelDay: `${parseDate(
+            day
+          )} Date range, selected start date ${parseDate(
+            startDate
+          )}, selected end date ${parseDate(endDate)}`,
+        });
+      }
+    } else {
+      const prefix =
+        this.isDisabled() || this.isExcluded()
+          ? ariaLabelPrefixWhenDisabled
+          : this.isSameDay(selected)
+          ? `Selected single date`
+          : ariaLabelPrefixWhenEnabled;
+
+      this.setState({
+        labelDay: `${prefix}, ${parseDate(day)}`,
+      });
+    }
   };
 
   getTabIndex = (selected, preSelection) => {
@@ -346,7 +397,7 @@ export default class Day extends React.Component {
       onClick={this.handleClick}
       onMouseEnter={this.handleMouseEnter}
       tabIndex={this.getTabIndex()}
-      aria-label={this.getAriaLabel()}
+      aria-label={this.state.labelDay}
       role="button"
       aria-disabled={this.isDisabled()}
       aria-current={this.isCurrentDay() ? "date" : undefined}
