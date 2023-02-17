@@ -1,6 +1,6 @@
 {
   "author": "HackerOne",
-  "name": "react-datepicker",
+  "name": "@greatminds/react-datepicker",
   "description": "Great Minds fork of React Datepicker, a simple and reusable datepicker component for React",
   "version": "4.8.2",
   "license": "MIT",
