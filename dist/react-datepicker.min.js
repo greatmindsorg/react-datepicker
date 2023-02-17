@@ -4713,11 +4713,19 @@
               )
                 r.setPreSelection(e);
               else if (!r.props.inline) {
-                r.props.selectsRange || r.setOpen(!1);
+                r.props.selectsRange ||
+                  setTimeout(function () {
+                    return r.setOpen(!1);
+                  }, 100);
                 var n = r.props,
                   o = n.startDate,
                   s = n.endDate;
-                !o || s || dt.default(e, o) || r.setOpen(!1);
+                !o ||
+                  s ||
+                  dt.default(e, o) ||
+                  setTimeout(function () {
+                    return r.setOpen(!1);
+                  }, 100);
               }
             }),
             Ct(Pt(r), "setSelected", function (e, t, a, n) {

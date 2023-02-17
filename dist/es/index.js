@@ -4237,11 +4237,19 @@ var Jt = (function (t) {
         )
           s.setPreSelection(e);
         else if (!s.props.inline) {
-          s.props.selectsRange || s.setOpen(!1);
+          s.props.selectsRange ||
+            setTimeout(function () {
+              return s.setOpen(!1);
+            }, 100);
           var n = s.props,
             o = n.startDate,
             a = n.endDate;
-          !o || a || X(e, o) || s.setOpen(!1);
+          !o ||
+            a ||
+            X(e, o) ||
+            setTimeout(function () {
+              return s.setOpen(!1);
+            }, 100);
         }
       }),
       fe(ge(s), "setSelected", function (e, t, r, n) {

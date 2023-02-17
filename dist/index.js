@@ -4384,11 +4384,19 @@ var Xa = (function (e) {
         )
           r.setPreSelection(e);
         else if (!r.props.inline) {
-          r.props.selectsRange || r.setOpen(!1);
+          r.props.selectsRange ||
+            setTimeout(function () {
+              return r.setOpen(!1);
+            }, 100);
           var n = r.props,
             o = n.startDate,
             s = n.endDate;
-          !o || s || nt.default(e, o) || r.setOpen(!1);
+          !o ||
+            s ||
+            nt.default(e, o) ||
+            setTimeout(function () {
+              return r.setOpen(!1);
+            }, 100);
         }
       }),
       bt(Ct(r), "setSelected", function (e, t, a, n) {
