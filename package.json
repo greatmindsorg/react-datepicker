@@ -1,8 +1,8 @@
 {
   "author": "HackerOne",
-  "name": "react-datepicker",
+  "name": "@greatminds/react-datepicker",
   "description": "Great Minds fork of React Datepicker, a simple and reusable datepicker component for React",
-  "version": "4.8.4",
+  "version": "4.8.5",
   "license": "MIT",
   "homepage": "https://github.com/greatmindsorg/react-datepicker",
   "main": "dist/index.js",
