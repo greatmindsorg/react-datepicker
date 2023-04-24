@@ -171,6 +171,7 @@ export default class DatePicker extends React.Component {
     ),
     filterDate: PropTypes.func,
     fixedHeight: PropTypes.bool,
+    form: PropTypes.string,
     formatWeekNumber: PropTypes.func,
     highlightDates: PropTypes.array,
     id: PropTypes.string,
@@ -180,6 +181,7 @@ export default class DatePicker extends React.Component {
     injectTimes: PropTypes.array,
     inline: PropTypes.bool,
     isClearable: PropTypes.bool,
+    showIcon: PropTypes.bool,
     locale: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.shape({ locale: PropTypes.object }),
@@ -375,6 +377,7 @@ export default class DatePicker extends React.Component {
       // used to focus day in inline version after month has changed, but not on
       // initial render
       shouldFocusDayInline: false,
+      isRenderAriaLiveMessage: false,
     };
   };
 
@@ -493,6 +496,7 @@ export default class DatePicker extends React.Component {
       this.props.dateFormat,
       this.props.locale,
       this.props.strictParsing,
+      this.props.selected,
       this.props.minDate
     );
     // Use date from `selected` prop when manipulating only time for input value
@@ -500,11 +504,19 @@ export default class DatePicker extends React.Component {
       this.props.showTimeSelectOnly &&
       !isSameDay(date, this.props.selected)
     ) {
-      date = set(this.props.selected, {
-        hours: getHours(date),
-        minutes: getMinutes(date),
-        seconds: getSeconds(date),
-      });
+      if (date == null) {
+        date = set(this.props.selected, {
+          hours: getHours(this.props.selected),
+          minutes: getMinutes(this.props.selected),
+          seconds: getSeconds(this.props.selected),
+        });
+      } else {
+        date = set(this.props.selected, {
+          hours: getHours(date),
+          minutes: getMinutes(date),
+          seconds: getSeconds(date),
+        });
+      }
     }
     if (date || !event.target.value) {
       this.setSelected(date, event, true);
@@ -525,6 +537,7 @@ export default class DatePicker extends React.Component {
       this.props.onChangeRaw(event);
     }
     this.setSelected(date, event, false, monthSelectedIn);
+    this.setState({ isRenderAriaLiveMessage: true });
     if (!this.props.shouldCloseOnSelect || this.props.showTimeSelect) {
       this.setPreSelection(date);
     } else if (!this.props.inline) {
@@ -667,6 +680,9 @@ export default class DatePicker extends React.Component {
     }
     if (this.props.showTimeInput) {
       this.setOpen(true);
+    }
+    if (this.props.showTimeSelectOnly || this.props.showTimeSelect) {
+      this.setState({ isRenderAriaLiveMessage: true });
     }
     this.setState({ inputValue: null });
   };
@@ -1013,6 +1029,75 @@ export default class DatePicker extends React.Component {
     );
   };
 
+  renderAriaLiveRegion = () => {
+    const { dateFormat, locale } = this.props;
+    const isContainsTime =
+      this.props.showTimeInput || this.props.showTimeSelect;
+    const longDateFormat = isContainsTime ? "PPPPp" : "PPPP";
+    let ariaLiveMessage;
+
+    if (this.props.selectsRange) {
+      ariaLiveMessage = `Selected start date: ${safeDateFormat(
+        this.props.startDate,
+        {
+          dateFormat: longDateFormat,
+          locale,
+        }
+      )}. ${
+        this.props.endDate
+          ? "End date: " +
+            safeDateFormat(this.props.endDate, {
+              dateFormat: longDateFormat,
+              locale,
+            })
+          : ""
+      }`;
+    } else {
+      if (this.props.showTimeSelectOnly) {
+        ariaLiveMessage = `Selected time: ${safeDateFormat(
+          this.props.selected,
+          { dateFormat, locale }
+        )}`;
+      } else if (this.props.showYearPicker) {
+        ariaLiveMessage = `Selected year: ${safeDateFormat(
+          this.props.selected,
+          { dateFormat: "yyyy", locale }
+        )}`;
+      } else if (this.props.showMonthYearPicker) {
+        ariaLiveMessage = `Selected month: ${safeDateFormat(
+          this.props.selected,
+          { dateFormat: "MMMM yyyy", locale }
+        )}`;
+      } else if (this.props.showQuarterYearPicker) {
+        ariaLiveMessage = `Selected quarter: ${safeDateFormat(
+          this.props.selected,
+          {
+            dateFormat: "yyyy, QQQ",
+            locale,
+          }
+        )}`;
+      } else {
+        ariaLiveMessage = `Selected date: ${safeDateFormat(
+          this.props.selected,
+          {
+            dateFormat: longDateFormat,
+            locale,
+          }
+        )}`;
+      }
+    }
+
+    return (
+      <span
+        role="alert"
+        aria-live="polite"
+        className="react-datepicker__aria-live"
+      >
+        {this.state.isRenderAriaLiveMessage && ariaLiveMessage}
+      </span>
+    );
+  };
+
   renderDateInput = () => {
     const className = classnames(this.props.className, {
       [outsideClickIgnoreClass]: this.state.open,
@@ -1045,6 +1130,7 @@ export default class DatePicker extends React.Component {
       onKeyDown: this.onInputKeyDown,
       id: this.props.id,
       name: this.props.name,
+      form: this.props.form,
       autoFocus: this.props.autoFocus,
       placeholder: this.props.placeholderText,
       disabled: this.props.disabled,
@@ -1091,8 +1177,23 @@ export default class DatePicker extends React.Component {
   };
 
   renderInputContainer() {
+    const { showIcon } = this.props;
     return (
-      <div className="react-datepicker__input-container">
+      <div
+        className={`react-datepicker__input-container ${
+          showIcon ? "react-datepicker__view-calendar-icon" : ""
+        }`}
+      >
+        {showIcon && (
+          <svg
+            className="react-datepicker__calendar-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 448 512"
+          >
+            <path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" />
+          </svg>
+        )}
+        {this.renderAriaLiveRegion()}
         {this.renderDateInput()}
         {this.renderClearButton()}
       </div>
