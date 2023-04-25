@@ -6,12 +6,14 @@ import addHours from "date-fns/addHours";
 import addDays from "date-fns/addDays";
 import addWeeks from "date-fns/addWeeks";
 import addMonths from "date-fns/addMonths";
+import addQuarters from "date-fns/addQuarters";
 import addYears from "date-fns/addYears";
 import subMinutes from "date-fns/subMinutes";
 import subHours from "date-fns/subHours";
 import subDays from "date-fns/subDays";
 import subWeeks from "date-fns/subWeeks";
 import subMonths from "date-fns/subMonths";
+import subQuarters from "date-fns/subQuarters";
 import subYears from "date-fns/subYears";
 import getSeconds from "date-fns/getSeconds";
 import getMinutes from "date-fns/getMinutes";
@@ -59,10 +61,6 @@ import longFormatters from "date-fns/esm/_lib/format/longFormatters";
 
 export const DEFAULT_YEAR_ITEM_NUMBER = 12;
 
-// This RegExp catches symbols escaped by quotes, and also
-// sequences of symbols P, p, and the combinations like `PPPPPPPppppp`
-var longFormattingTokensRegExp = /P+p+|P+|p+|''|'(''|[^'])+('|$)|./g;
-
 // ** Date Constructors **
 
 export function newDate(value) {
@@ -74,59 +72,24 @@ export function newDate(value) {
   return isValid(d) ? d : null;
 }
 
-export function parseDate(value, dateFormat, locale, strictParsing, minDate) {
-  let parsedDate = null;
-  let localeObject =
+export function parseDate(value, dateFormat, locale, strictParsing, refDate) {
+  const localeObject =
     getLocaleObject(locale) || getLocaleObject(getDefaultLocale());
-  let strictParsingValueMatch = true;
-  if (Array.isArray(dateFormat)) {
-    dateFormat.forEach((df) => {
-      let tryParseDate = parse(value, df, new Date(), {
-        locale: localeObject,
-      });
-      if (strictParsing) {
-        strictParsingValueMatch =
-          isValid(tryParseDate, minDate) &&
-          value === formatDate(tryParseDate, df, locale);
-      }
-      if (isValid(tryParseDate, minDate) && strictParsingValueMatch) {
-        parsedDate = tryParseDate;
-      }
-    });
-    return parsedDate;
-  }
 
-  parsedDate = parse(value, dateFormat, new Date(), { locale: localeObject });
+  const formats = Array.isArray(dateFormat) ? dateFormat : [dateFormat];
+  refDate = refDate || newDate();
 
-  if (strictParsing) {
-    strictParsingValueMatch =
-      isValid(parsedDate) &&
-      value === formatDate(parsedDate, dateFormat, locale);
-  } else if (!isValid(parsedDate)) {
-    dateFormat = dateFormat
-      .match(longFormattingTokensRegExp)
-      .map(function (substring) {
-        var firstCharacter = substring[0];
-        if (firstCharacter === "p" || firstCharacter === "P") {
-          var longFormatter = longFormatters[firstCharacter];
-          return localeObject
-            ? longFormatter(substring, localeObject.formatLong)
-            : firstCharacter;
-        }
-        return substring;
-      })
-      .join("");
-
-    if (value.length > 0) {
-      parsedDate = parse(value, dateFormat.slice(0, value.length), new Date());
-    }
-
-    if (!isValid(parsedDate)) {
-      parsedDate = new Date(value);
+  for (let i = 0, len = formats.length; i < len; i++) {
+    const format = formats[i];
+    const parsedDate = parse(value, format, refDate, { locale: localeObject });
+    if (
+      isValid(parsedDate /* , minDate */) &&
+      (!strictParsing || value === formatDate(parsedDate, format, locale))
+    ) {
+      return parsedDate;
     }
   }
-
-  return isValid(parsedDate) && strictParsingValueMatch ? parsedDate : null;
+  return null;
 }
 
 // ** Date "Reflection" **
@@ -144,21 +107,15 @@ export function formatDate(date, formatStr, locale) {
   if (locale === "en") {
     return format(date, formatStr, { awareOfUnicodeTokens: true });
   }
-  let localeObj = getLocaleObject(locale);
+  const localeObj =
+    getLocaleObject(locale) || getLocaleObject(getDefaultLocale()) || null;
   if (locale && !localeObj) {
     console.warn(
       `A locale object was not found for the provided string ["${locale}"].`
     );
   }
-  if (
-    !localeObj &&
-    !!getDefaultLocale() &&
-    !!getLocaleObject(getDefaultLocale())
-  ) {
-    localeObj = getLocaleObject(getDefaultLocale());
-  }
   return format(date, formatStr, {
-    locale: localeObj ? localeObj : null,
+    locale: localeObj,
     awareOfUnicodeTokens: true,
   });
 }
@@ -266,7 +223,7 @@ export function getEndOfMonth(date) {
 
 // *** Addition ***
 
-export { addMinutes, addDays, addWeeks, addMonths, addYears };
+export { addMinutes, addDays, addWeeks, addMonths, addQuarters, addYears };
 
 // *** Subtraction ***
 
@@ -277,6 +234,7 @@ export {
   subDays,
   subWeeks,
   subMonths,
+  subQuarters,
   subYears,
 };
 
