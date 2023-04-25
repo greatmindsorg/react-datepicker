@@ -12,7 +12,8 @@ import enGB from "date-fns/locale/en-GB";
 import slugify from "slugify";
 import range from "lodash/range";
 import prismGitHubTheme from "prism-react-renderer/themes/github";
-import editIcon from "./edit-regular.svg";
+// TODO: find a solution for compatibility issues with Node.js v18 and the crypto module
+// import editIcon from "./edit-regular.svg";
 
 export default class CodeExampleComponent extends React.Component {
   static propTypes = {
@@ -50,12 +51,12 @@ export default class CodeExampleComponent extends React.Component {
             theme={prismGitHubTheme}
           >
             <pre className="example__code">
-              <img
+              {/* <img
                 src={editIcon}
                 className="example__code__edit_icon"
                 alt="edit icon"
                 title="Edit the code directly on the left side and and see the output on the right"
-              />
+              /> */}
               <LiveEditor />
             </pre>
             <div className="example__preview">
